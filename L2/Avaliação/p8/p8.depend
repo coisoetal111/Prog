@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1771949405 source:/home/mint/Documents/p8/main.c
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+
