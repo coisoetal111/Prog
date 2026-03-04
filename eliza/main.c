@@ -5,9 +5,10 @@ capaz de o ler*/
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-//char remove_symbol(char buffer);
+char *getRest(char **info, char **dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
+void rotation(char **dataBase, int count);
 int main()
 {   //open the file and read it
     FILE *pfile = fopen("file.txt", "r");
@@ -72,7 +73,7 @@ int main()
             }
     }
     fclose(pfile);
-
+    //pode ser preciso tratar dos arrays do file para remover tbm pontuação pelo menos para keyword
 
 
 
@@ -81,7 +82,7 @@ int main()
     printf("%s\n", pinitial_3[0]);
 
     /* temos de nos preocupar com o receber input, encontrar a equivalencia em termos de keywords e rotacionar as palavras*/
-    char **pinput = malloc(sizeof(char*));
+    char **pinput = malloc(10 * sizeof(char*));
     while(true){
         if(fgets(buffer, sizeof(buffer), stdin) != NULL){
             buffer[strcspn(buffer, "\n")] = '\0';  //vamos tratar o input ja no buffer para assim caso recebemos BYE ou ADEUS o programa para
@@ -94,8 +95,15 @@ int main()
             }
             removeSymbols(buffer);
             pinput[0] = strdup(buffer);
+            //criar condição para caso de repeticao de input
             int match = searcher(pinput, pkey_words, count_keywords);
-            if(!match) printf("\n%s", *pespecial);
+            if(!match){
+               printf("\n%s", *pespecial);
+               continue;
+            }
+            char *finishResponses = getRest(pinput, pkey_words, count_keywords);
+            //void rotation(*presponses); //a pensar em criar um array que mantem o valor da resposta para depois fazer a rotação
+
         }
 
 
@@ -106,7 +114,9 @@ int main()
 
 
         //limpagem de memoria do stdin
+        free(pinput[0]);
         free(pinput);
+
     }
 
 
@@ -158,15 +168,14 @@ int main()
     free(pespecial[0]); //será necessario fazer este free?
     free(pespecial);
 
-    return 0;
-    //EXIT_SUCESS (0);
+    exit (0); //EXIT_SUCESS (0)
 }
 //este codigo com a ajuda do isalnum que remove qualquer simbolo vai remover o simbolos dos inputs stdin
 void removeSymbols(char * vector){
     int i = 0;
     int j = 0;
     while(vector[i]){ //loop funciona ate encontrar o \0 porque este de todos os outros é o que possui o valor de 0 no ASCII
-        if(isalnum(vector[i]) || vector[i] == ' '){
+        if(isalnum(vector[i]) || vector[i] == ' '){ //isalnum da o valor de 1 caso encontre um numero que nao é alphanumerico
                 vector[j++] = vector[i]; //j++ nao significa que começa no 1 mas sim que começa no zero e sobe depois para 1
         }
         i++;
@@ -174,19 +183,45 @@ void removeSymbols(char * vector){
     vector[j] = '\0'; //garantir que a sting tem o seu fim marcado
 }
 int searcher(char **info, char **dataBase, int count){
-    int match = 0;
-    char *search = strtok(info[0], " "); //"divide" as palavra separadas com os espaços e da ao search apenas uma palavra a antes do 1 espaço
-    while(search){
-        for(int i = 0; i < count; i++){
-            if(strcmp(search, dataBase[i]) == 0){
-                match = 1; //tem uma resposta. este codigo deve ser aprimorado ou ate respensado para depois cumprir com os objetivos
-                break;
-            }
-            search = strtok(NULL, " "); //faz com que comece no \0 que tinha parado pela primeira fez e procure o proximo espaço ou o fim
+    //int match = 0;
+    //char *search = strtok(info[0], " "); //"divide" as palavra separadas com os espaços e da ao search apenas uma palavra a antes do 1 espaço
+    //while(search){
+    for(int i = 0; i < count; i++){
+        //char *keyWord = dataBase[i];
+        char *search = strstr(info[0], dataBase[i]); //ve se encontra alguma semelhança nas strings e atribui a search
 
+        //int size = strlen(dataBase[i]);
+            //if(strcmp(search, dataBase[i]) == 0){
+        while(search){
+            bool checkBefore = (search == info[0]) || (*(search-1) == ' '); //cheka a parte detras para ver se nao ha nenhuma palavra que nao pertence
+            bool checkAfter = (search[strlen(dataBase[i])] == '\0') || (search[strlen(dataBase[i])] == ' ');
+            if(checkBefore && checkAfter) return 1;
+            search = strstr(search+1, dataBase[i]); //vai avaçando na palavra que achamos para ver se é ou nao o que queremos
         }
-        free(search);
+               //match = 1; //tem uma resposta. este codigo deve ser aprimorado ou ate respensado para depois cumprir com os objetivos
+
+               // break; //talvez eu nao queira dar break para assim ele continuar a ver mas ai ha o problema de encontrar uma que nao da depois
+           // }
     }
+        //search = strtok(NULL, " "); //faz com que comece no \0 que tinha parado pela primeira fez e procure o proximo espaço ou o fim
+    //}
     //if(!match) printf("\n%s", pes)
-    return match;
+    return 0;
+    //return match;
+}
+void rotation(char **dataBase, int count){
+
+
+}
+char *getRest(char **info, char **dataBase, int count){
+    for(int i = 0; i < count; i++){
+        char *rest = strstr(info[0], dataBase[i]); //encontra a keyword
+        if(rest != NULL){
+        rest += strlen(dataBase[i]); //vai para a frente da keyword para assim nao termos a keyword no print
+        if(*rest == '\0') return NULL;
+        if(*rest == ' ') rest++; //se o primeiro rest for um espaço vamos o remover
+        return rest;
+        }
+    }
+    return NULL;
 }
