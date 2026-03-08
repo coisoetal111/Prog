@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1772665347 source:/home/mint/Documents/eliza/main.c
+1772993701 source:/home/mint/Documents/eliza/main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
