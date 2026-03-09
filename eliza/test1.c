@@ -8,7 +8,8 @@ capaz de o ler*/
 char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block); 
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr); 
+int *crr = 0;
 int main()
 {   //open the file and read it
     FILE *pfile = fopen("eliza.dat", "r");
@@ -124,10 +125,10 @@ int main()
             int currentBlock = pkey_words_block[match];
             char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
             if(finishResponses != NULL){
-                printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock), finishResponses);
+                printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, crr), finishResponses);
 
             }else{
-                printf("%s\n", round_robin(presponses, count_responses, presponses_block, currentBlock));
+                printf("%s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, crr));
             }
             //void rotation(*presponses); //a pensar em criar um array que mantem o valor da resposta para depois fazer a rotação
             //so agora para experimentacao:
@@ -223,10 +224,10 @@ int searcher(char **info, char **dataBase, int count){
     }
     return -1; //este return e -1 para garantir que nunca pode ter um valor igual ao i que tbm damos return
 }
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block){
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr){
     int c1 = 0;
     int c2 = 0;
-    int c3;
+    int c3 = *crr;
    
    if(responsesBlock[c3] != Block ){
     while(responsesBlock[c1] != Block){
@@ -241,16 +242,18 @@ char *round_robin(char **dataBase, int count, int*responsesBlock, int Block){
 
     }
 
-    c3 = c2;
+    *crr = c2;
 }
     
     
     if(c3 <= c1){
     char *result = strdup(dataBase[c2]);
-    c3++;
+    *crr++;
     
     return result;
     }
+
+    return NULL;
 }
 char *getRest(char **info, char *dataBase, int count){
         char *rest = strstr(info[0], dataBase); //encontra a keyword
