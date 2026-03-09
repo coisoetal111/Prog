@@ -9,7 +9,7 @@ char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr); 
-int *crr = 0;
+int crr[100] = {0};
 int main()
 {   //open the file and read it
     FILE *pfile = fopen("eliza.dat", "r");
@@ -225,30 +225,31 @@ int searcher(char **info, char **dataBase, int count){
     return -1; //este return e -1 para garantir que nunca pode ter um valor igual ao i que tbm damos return
 }
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr){
-    int c1 = 0;
-    int c2 = 0;
-    int c3 = *crr;
+    int bmin = -1;
+    int btamanho = 0;
+    
+    
+    for(int i = 0; i < count; i++){
+        if( responsesBlock[i] == Block){
+
+            if (bmin == -1){bmin = i;}
+            btamanho++;
+
+
+        }
+    }
+    
+   if(responsesBlock[crr[Block]] != Block){crr[Block] = bmin;}
    
-   if(responsesBlock[c3] != Block ){
-    while(responsesBlock[c1] != Block){
 
-        c1++;
-
-    }
-    c2 = c1;
-    while(responsesBlock[c1] == Block){
-    
-        c1++;
-
-    }
-
-    *crr = c2;
-}
     
     
-    if(c3 <= c1){
-    char *result = strdup(dataBase[c2]);
-    *crr++;
+    
+    if(crr[Block] <= bmin + btamanho){
+    
+    
+    char *result = strdup(dataBase[crr[Block]]);
+    crr[Block]++;
     
     return result;
     }
