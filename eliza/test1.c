@@ -8,8 +8,8 @@ capaz de o ler*/
 char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int crr); 
-int crr = 0;
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int* crr); 
+int *crr;
 int main()
 {   //open the file and read it
     FILE *pfile = fopen("eliza.dat", "r");
@@ -224,29 +224,31 @@ int searcher(char **info, char **dataBase, int count){
     }
     return -1; //este return e -1 para garantir que nunca pode ter um valor igual ao i que tbm damos return
 }
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int crr){
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr){
     int c1 = 0;
     int c2 = 0;
    
-   
+   if(responsesBlock[*crr] != Block ){
     while(responsesBlock[c1] != Block){
 
         c1++;
 
     }
-    c1 = c2;
+    c2 = c1;
     while(responsesBlock[c1] == Block){
     
         c1++;
 
     }
 
-
+    *crr = c2;
+}
     
     
-    if(c2 <= c1){
+    if(crr <= c1){
     char *result = strdup(dataBase[c2]);
-    c2++;
+    crr++;
+    
     return result;
     }
 }
@@ -260,5 +262,3 @@ char *getRest(char **info, char *dataBase, int count){
         }
     return NULL;
 }
-
-
