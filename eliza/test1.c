@@ -8,8 +8,7 @@ capaz de o ler*/
 char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int* crr); 
-int *crr;
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block); 
 int main()
 {   //open the file and read it
     FILE *pfile = fopen("eliza.dat", "r");
@@ -125,10 +124,10 @@ int main()
             int currentBlock = pkey_words_block[match];
             char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
             if(finishResponses != NULL){
-                printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, crr), finishResponses);
+                printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock), finishResponses);
 
             }else{
-                printf("%s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, crr));
+                printf("%s\n", round_robin(presponses, count_responses, presponses_block, currentBlock));
             }
             //void rotation(*presponses); //a pensar em criar um array que mantem o valor da resposta para depois fazer a rotação
             //so agora para experimentacao:
@@ -224,11 +223,12 @@ int searcher(char **info, char **dataBase, int count){
     }
     return -1; //este return e -1 para garantir que nunca pode ter um valor igual ao i que tbm damos return
 }
-char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr){
+char *round_robin(char **dataBase, int count, int*responsesBlock, int Block){
     int c1 = 0;
     int c2 = 0;
+    int c3;
    
-   if(responsesBlock[*crr] != Block ){
+   if(responsesBlock[c3] != Block ){
     while(responsesBlock[c1] != Block){
 
         c1++;
@@ -241,13 +241,13 @@ char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int
 
     }
 
-    *crr = c2;
+    c3 = c2;
 }
     
     
-    if(crr <= c1){
+    if(c3 <= c1){
     char *result = strdup(dataBase[c2]);
-    crr++;
+    c3++;
     
     return result;
     }
@@ -262,3 +262,5 @@ char *getRest(char **info, char *dataBase, int count){
         }
     return NULL;
 }
+
+
