@@ -7,7 +7,7 @@ LEEC - 25/26*/
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-//char *getRest(char **info, char *dataBase, int count);
+char *getRest(char **info, char *dataBase, int count);
 //char **readFile(        );
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
@@ -108,19 +108,12 @@ int main()
             for(int i = 0; buffer[i] != '\0'; i++){
                 buffer[i] = toupper(buffer[i]);
             }
-            if(strcmp(buffer, "BYE") == 0){ //depois vamos ter de estudar o que fazer em relação ao adeus
-            printf("%s\n", pinitial_3[10]);
-            break;
-            }
             removeSymbols(buffer);
-            bool isNothing = true; //podera ser adicicinado dentro de removeSymbols e serve para ver se é apenas espaços ou nao
-            for(int i = 0; buffer[i] != '\0'; i++){
-                if(buffer[i] != ' '){
-                    isNothing = false;
-                    break;
-                }
+            if(strcmp(buffer, "\0") == 0) continue; // caso o input seja so espaços
+            if(strcmp(buffer, "BYE") == 0){ //depois vamos ter de estudar o que fazer em relação ao adeus
+                printf("%s\n", pinitial_3[10]);
+                break;
             }
-            if(isNothing) continue;
             pinput[0] = strdup(buffer);
             //criar condição para caso de repeticao de input
             if(pinput[1] != NULL && strcmp(pinput[0], pinput[1]) == 0){ //caso o ultimo input seja igual ao input atual
@@ -139,11 +132,24 @@ int main()
                 printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, counterRound_robin), finishResponses);
                 */
                 //}else{
-                char *resp = round_robin(presponses, count_responses, presponses_block, currentBlock, counterRound_robin);
+            char *resp = round_robin(presponses, count_responses, presponses_block, currentBlock, counterRound_robin);
+            //bool ISAsterisk = false
+            char *asterisk = strchr(resp, '*');
+            if(asterisk != NULL){
+                char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
+                if(finishResponses != NULL){
+                    char *final_of_string = strdup(asterisk + 1); //passa para uma sting todo o resto depois do *
+                    *asterisk = '\0'; //remove o * no resp ja que estes estao associados pelo mesmo adereco
+                    int size = strlen(finishResponses) + strlen(resp);
+                    resp = realloc(resp, size * sizeof(char*));
+                    strcat(resp, finishResponses);
+                    strcat(resp, final_of_string);
+                    free(final_of_string);
+                }
+            }
                 printf("%s\n", resp);
                 free(resp);
-
-        free(pinput[0]); //limpagem de memoria do stdin
+                free(pinput[0]); //limpagem de memoria do stdin
     }
     //limpagem de memoria do stdin
     if(pinput[1] != NULL) free(pinput[1]);
@@ -168,7 +174,7 @@ int main()
 void removeSymbols(char * vector){
     int i = 0;
     int j = 0;
-    bool repeatedSpaces = false;
+    bool repeatedSpaces = true; //começa true pq nao queremos espacos no inicio da string
     while(vector[i]){ //loop funciona ate encontrar o \0 porque este de todos os outros é o que possui o valor de 0 no ASCII
         if(isalnum(vector[i])){ //isalnum da o valor de 0 caso encontre algo que nao e alphanumerico
                 vector[j++] = vector[i]; //j++ nao significa que começa no 1 mas sim que começa no zero e sobe logo de seguida para 1
@@ -182,6 +188,7 @@ void removeSymbols(char * vector){
         }
         i++;
     }
+    if(j > 0 && vector[j-1] == ' ') j--;
     vector[j] = '\0'; //garantir que a sting tem o seu fim marcado
 }
 int searcher(char **info, char **dataBase, int count){
@@ -211,13 +218,13 @@ char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int
     crr[Block]++; //incrementa o valor do index dentro do bloco em 1 para assim haver a rotatividade esperada
     return result;
 }
-/*char *getRest(char **info, char *dataBase, int count){
+char *getRest(char **info, char *dataBase, int count){
         char *rest = strstr(info[0], dataBase); //encontra a keyword na string
         if(rest != NULL){
         rest += strlen(dataBase); //vai para a frente da keyword para assim nao termos a keyword no print
         if(*rest == '\0') return NULL;
-        if(*rest == ' ') rest++; //se o primeiro rest for um espaço vamos o remover
+        //if(*rest == ' ') rest++; //se o primeiro rest for um espaço vamos o remover
         return rest;
         }
     return NULL; //por boa pratica devemos returnar sempre algo no fim do codigo mesmo que pareça impossivel chegar ate aqui
-}*/
+}
