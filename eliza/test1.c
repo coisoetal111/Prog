@@ -7,13 +7,89 @@ LEEC - 25/26*/
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
 char *getRest(char **info, char *dataBase, int count);
 //char **readFile(        );
 void removeSymbols(char * vector);
 int searcher(char **info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr);
-int main()
-{   //open the file and read it
+int main(int argc, char **argv)
+{   
+    
+    //terminal handler
+    char *filename = "eliza.dat";
+    FILE *output = stdout;
+    int terhandler;
+    while ((terhandler = getopt(argc, argv, "hi:o:l:f:p:")) != -1)
+  {
+    switch (terhandler)
+      {
+      case 'h':
+        printf("Arguments:\n-h\t\tmostra a ajuda para o utilizador(esta mensagem) e termina\n");
+        printf("-i[filename]\tnome do ficheiro de entrada, em alternativa a stdin\n");
+        printf("-o[filename]\tnome do ficheiro de saída, em alternativa a stdout\n");
+        printf("-l[filename]\tfazer log do input e output para o ficheiro filename\n");
+        printf("-i[filename]\tusar ficheiro filename com base de dados de respostas em vez de \"eliza.dat\"\n");
+        printf("-p\t\tusar regras de português, em vez de inglês\n");
+        break;
+      case 'i':
+       //n entendi sequer o q fzr aqui
+        break;
+      case 'o':
+        output = fopen(optarg, "w");
+          //talvez este if seja inutil mas por precauçao:     
+          if (output == NULL) {
+                    perror("Erro ao abrir o ficheiro de output");
+                    return 1;
+                }
+        //supostamente cria um ficheiro com o nome dado e escreve o output aí
+        //testado e a funcionar (espero eu)
+        break;
+        case 'l':
+        //n entendi sequer o q fzr aqui
+        break;
+      case 'f':
+       filename = optarg;
+        break;
+      case 'p':
+        //Português ao invés de inglês
+        // para ser honesto n sei como hei de fzr isto portanto boa sorte Torres☆*: .｡. o(≧▽≦)o .｡.:*☆
+        break;
+      
+      
+      
+      
+        case '?':
+        if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
+          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        else if (isprint (optopt))
+          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+        else
+          fprintf (stderr,
+                   "Unknown option character `\\x%x'.\n",
+                   optopt);
+    }
+
+
+}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //open the file and read it
     FILE *pfile = fopen("eliza.dat", "r");
     char buffer[1024] = {0}; //mete tudo a 0
     int capacity_keywords = 10;
@@ -98,7 +174,7 @@ int main()
     /*tudo em relação a ler o ficheiro esta feito
     hora de trabalhar com o stdin*/
     //int * counter_blocks = calloc(blocks, sizeof(int*)); //serve para saber em qual rotação estamos em cada bloco existente e começa em 0
-    printf("%s\n", pinitial_3[2]);
+    fprintf(output, "%s\n", pinitial_3[2]);
     /* temos de nos preocupar com o receber input, encontrar a equivalencia em termos de keywords e rotacionar as palavras*/
     char **pinput = calloc(10, sizeof(char*)); //estou a usar aqui o calloc pq como vou precisar guardar informação convem que comece em null
     while(true){
@@ -111,13 +187,13 @@ int main()
             removeSymbols(buffer);
             if(strcmp(buffer, "\0") == 0) continue; // caso o input seja so espaços
             if(strcmp(buffer, "BYE") == 0){ //depois vamos ter de estudar o que fazer em relação ao adeus
-                printf("%s\n", pinitial_3[10]);
+                fprintf(output, "%s\n", pinitial_3[10]);
                 break;
             }
             pinput[0] = strdup(buffer);
             //criar condição para caso de repeticao de input
             if(pinput[1] != NULL && strcmp(pinput[0], pinput[1]) == 0){ //caso o ultimo input seja igual ao input atual
-                printf("%s\n", pinitial_3[6]);
+                fprintf(output, "%s\n", pinitial_3[6]);
                 free(pinput[0]);
                 continue;
             }
@@ -147,7 +223,7 @@ int main()
                     free(final_of_string);
                 }
             }
-                printf("%s\n", resp);
+                fprintf(output, "%s\n", resp);
                 free(resp);
                 free(pinput[0]); //limpagem de memoria do stdin
     }
