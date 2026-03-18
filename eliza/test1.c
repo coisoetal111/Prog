@@ -19,6 +19,7 @@ int main(int argc, char **argv)
     //terminal handler
     char *filename = "eliza.dat";
     FILE *output = stdout;
+    FILE *input = stdin;
     int terhandler;
     while ((terhandler = getopt(argc, argv, "hi:o:l:f:p:")) != -1)
   {
@@ -33,13 +34,18 @@ int main(int argc, char **argv)
         printf("-p\t\tusar regras de português, em vez de inglês\n");
         break;
       case 'i':
-       //n entendi sequer o q fzr aqui
+       input = fopen(optarg, "w+");
+                if (input == NULL) {
+                    fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
+                    return 1;
+                }
+    //Torres falta implentar isto no resto do código
+    //n sei bem como é q o código lê o input mas preccisa de aceitar este ficheiro tb
         break;
       case 'o':
         output = fopen(optarg, "w");
-          //talvez este if seja inutil mas por precauçao:     
-          if (output == NULL) {
-                    perror("Erro ao abrir o ficheiro de output");
+                if (output == NULL) {
+                    fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
                     return 1;
                 }
         //supostamente cria um ficheiro com o nome dado e escreve o output aí
@@ -68,6 +74,9 @@ int main(int argc, char **argv)
           fprintf (stderr,
                    "Unknown option character `\\x%x'.\n",
                    optopt);
+            return 1;
+      default:
+        abort ();
     }
 
 
@@ -90,7 +99,7 @@ int main(int argc, char **argv)
     
     
     //open the file and read it
-    FILE *pfile = fopen("eliza.dat", "r");
+    FILE *pfile = fopen(filename, "r");
     char buffer[1024] = {0}; //mete tudo a 0
     int capacity_keywords = 10;
     int capacity_responses = 10;
@@ -227,6 +236,12 @@ int main(int argc, char **argv)
                 free(resp);
                 free(pinput[0]); //limpagem de memoria do stdin
     }
+    //fechar os ficheiros de input e output
+    fclose(output);
+    fclose(input);
+
+
+
     //limpagem de memoria do stdin
     if(pinput[1] != NULL) free(pinput[1]);
     free(pinput);
