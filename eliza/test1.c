@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     /* temos de nos preocupar com o receber input, encontrar a equivalencia em termos de keywords e rotacionar as palavras*/
     char **pinput = calloc(10, sizeof(char*)); //estou a usar aqui o calloc pq como vou precisar guardar informação convem que comece em null
     while(true){
-        if(fgets(buffer, sizeof(buffer), stdin) == NULL) break;
+        if(fgets(buffer, sizeof(buffer), input) == NULL) break;
             buffer[strcspn(buffer, "\r\n")] = '\0';  //vamos tratar o input ja no buffer para assim caso recebemos BYE ou ADEUS o programa para
             if(buffer[0] == '\0') continue;
             for(int i = 0; buffer[i] != '\0'; i++){
