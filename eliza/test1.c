@@ -11,11 +11,12 @@ LEEC - 25/26*/
 char *getRest(char **info, char *dataBase, int count);
 //char **readFile(        );
 void removeSymbols(char * vector);
-int searcher(char **info, char **dataBase, int count);
+int searcher(char *info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr);
+void conjution(char * response);
 int main(int argc, char **argv)
-{   
-    
+{
+
     //terminal handler
     char *filename = "eliza.dat";
     FILE *output = stdout;
@@ -38,15 +39,15 @@ int main(int argc, char **argv)
        input = fopen(optarg, "r");
                 if (input == NULL) {
                     fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
-                    return 1;
+                    exit(EXIT_FAILURE);
                 }
-    
+
         break;
       case 'o':
         output = fopen(optarg, "w");
                 if (output == NULL) {
                     fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
-                    return 1;
+                    exit(EXIT_FAILURE);
                 }
         //supostamente cria um ficheiro com o nome dado e escreve o output aí
         //testado e a funcionar (espero eu)
@@ -55,7 +56,7 @@ int main(int argc, char **argv)
         log = fopen(optarg, "w");
                 if (log == NULL) {
                     fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
-                    return 1;
+                    exit(EXIT_FAILURE);
                 }
         break;
       case 'f':
@@ -65,10 +66,10 @@ int main(int argc, char **argv)
         //Português ao invés de inglês
         // para ser honesto n sei como hei de fzr isto portanto boa sorte Torres☆*: .｡. o(≧▽≦)o .｡.:*☆
         break;
-      
-      
-      
-      
+
+
+
+
         case '?':
         if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
           fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -85,23 +86,23 @@ int main(int argc, char **argv)
 
 
 }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //open the file and read it
     FILE *pfile = fopen(filename, "r");
     char buffer[1024] = {0}; //mete tudo a 0
@@ -113,7 +114,7 @@ int main(int argc, char **argv)
     //char **pespecial = calloc(1, sizeof(char*));
     if(pfile == NULL){
         printf("Could not open file\n");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     /*vai salvar as informacoes vinda do ficheiro
     nos diferentes arrays de pointers*/
@@ -188,8 +189,8 @@ int main(int argc, char **argv)
     hora de trabalhar com o stdin*/
     //int * counter_blocks = calloc(blocks, sizeof(int*)); //serve para saber em qual rotação estamos em cada bloco existente e começa em 0
     fprintf(output, "%s\n", pinitial_3[2]);
-    
-    
+
+
     if(log != NULL) fprintf(log, "%s\n", pinitial_3[2]); //escrever as inputs no log
     /* temos de nos preocupar com o receber input, encontrar a equivalencia em termos de keywords e rotacionar as palavras*/
     char **pinput = calloc(10, sizeof(char*)); //estou a usar aqui o calloc pq como vou precisar guardar informação convem que comece em null
@@ -206,7 +207,7 @@ int main(int argc, char **argv)
             if(strcmp(buffer, "BYE") == 0){ //depois vamos ter de estudar o que fazer em relação ao adeus
                 fprintf(output, "%s\n", pinitial_3[10]);
                 if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
-                
+
                 break;
             }
             pinput[0] = strdup(buffer);
@@ -220,7 +221,7 @@ int main(int argc, char **argv)
             if(pinput[1] != NULL) free(pinput[1]); //liberta o ultimo input
             pinput[1] = strdup(pinput[0]); //guarda o input atual
 
-            int match = searcher(pinput, pkey_words, count_keywords); //vai receber o index da keyword onde foi encontrado a correspondencia
+            int match = searcher(pinput[0], pkey_words, count_keywords); //vai receber o index da keyword onde foi encontrado a correspondencia
             if(match == -1) match = count_keywords - 1; //vamos pegar  no ultima string de todas dentro do array de keywords para obtermos o index do bloco
             int currentBlock = pkey_words_block[match]; //obter o index do block onde esta a correspondencia
                 //char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
@@ -242,6 +243,7 @@ int main(int argc, char **argv)
                     strcat(resp, final_of_string);
                     free(final_of_string);
                 }
+                conjution(resp);
             }
                 fprintf(output, "%s\n", resp);
                 if(log != NULL) fprintf(log, "%s\n", resp);// escrever output no log
@@ -295,9 +297,9 @@ void removeSymbols(char * vector){
     if(j > 0 && vector[j-1] == ' ') j--;
     vector[j] = '\0'; //garantir que a sting tem o seu fim marcado
 }
-int searcher(char **info, char **dataBase, int count){
+int searcher(char *info, char **dataBase, int count){
     for(int i = 0; i < count; i++){
-        char *search = strstr(info[0], dataBase[i]); //ve se encontra alguma semelhança nas strings e atribui a search
+        char *search = strstr(info, dataBase[i]); //ve se encontra alguma semelhança nas strings e atribui a search
         while(search){
             bool checkBefore = (search == info[0]) || (*(search-1) == ' '); //cheka a parte detras para ver se nao ha nenhuma palavra que nao pertence
             bool checkAfter = (search[strlen(dataBase[i])] == '\0') || (search[strlen(dataBase[i])] == ' ');
@@ -332,3 +334,20 @@ char *getRest(char **info, char *dataBase, int count){
         }
     return NULL; //por boa pratica devemos returnar sempre algo no fim do codigo mesmo que pareça impossivel chegar ate aqui
 }
+void conjution(char * response){
+    //char **conjution = malloc(15 * sizeof(char*)); //para o que que a palavra tem de se substituir para
+    //char **cases = malloc(14 * sizeof(char*)); //que palavras vao ser substituidas
+    char *conjution[] = {"AM", "ARE", "WAS", "WERE", "I", "ME", "YOU", "MY",
+    "YOUR", "YOUVE", "IVE", "YOURE", "YOU", "YOU", "YOU"};
+    char *cases[] = {"ARE", "AM", "WERE", "WAS", "YOU", "I", "YOUR", "MY",
+    "IVE", "YOUVE", "IM", "ME", "US", "WE"};
+    int match = searcher(response, cases, 14);
+    /*for(int i = 0; i < 14; i++){
+        char *search = strstr(response[0], cases[i]);
+    }*/
+
+/*for(int i = 0; i < 15; i++) free(conjution[i]);
+free(conjution);
+for(int i = 0; i < 14; i++) free(cases[i]);
+free(cases);
+}*/
