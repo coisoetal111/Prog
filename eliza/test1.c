@@ -13,7 +13,7 @@ char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char *info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr);
-void conjution(char * response);
+char *conjution(char * response);
 int main(int argc, char **argv)
 {
 
@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     FILE *input = stdin;
     FILE *log = NULL;
     int terhandler;
+    bool is_portuguese = false;//para saber depois na conjução se é em portugues ou não
     while ((terhandler = getopt(argc, argv, "hi:o:l:f:p:")) != -1)
   {
     switch (terhandler)
@@ -63,6 +64,7 @@ int main(int argc, char **argv)
        filename = optarg;
         break;
       case 'p':
+        is_portuguese = true;
         //Português ao invés de inglês
         // para ser honesto n sei como hei de fzr isto portanto boa sorte Torres☆*: .｡. o(≧▽≦)o .｡.:*☆
         break;
@@ -204,7 +206,7 @@ int main(int argc, char **argv)
             }
             removeSymbols(buffer);
             if(strcmp(buffer, "\0") == 0) continue; // caso o input seja so espaços
-            if(strcmp(buffer, "BYE") == 0){ //depois vamos ter de estudar o que fazer em relação ao adeus
+            if(strcmp(buffer, "BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
                 fprintf(output, "%s\n", pinitial_3[10]);
                 if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
 
@@ -301,9 +303,12 @@ int searcher(char *info, char **dataBase, int count){
     for(int i = 0; i < count; i++){
         char *search = strstr(info, dataBase[i]); //ve se encontra alguma semelhança nas strings e atribui a search
         while(search){
-            bool checkBefore = (search == info[0]) || (*(search-1) == ' '); //cheka a parte detras para ver se nao ha nenhuma palavra que nao pertence
-            bool checkAfter = (search[strlen(dataBase[i])] == '\0') || (search[strlen(dataBase[i])] == ' ');
+            bool checkBefore = (search == info) || (*(search-1) == ' '); //cheka a parte detras para ver se nao ha nenhuma palavra que nao pertence
+            bool checkAfter = (search[strlen(dataBase[i])] == '\0') || (search[strlen(dataBase[i])] == ' ');//isto cheka a que tem a frente da palavra
+            //bool isAsteriskyou = (search[strlen(dataBase[i])] == '*');
+            //if(isAsteriskyou) return 15;
             if(checkBefore && checkAfter) return i;
+
             search = strstr(search+1, dataBase[i]); //vai avaçando na palavra que achamos para ver se e ou nao o que queremos
         }
     }
@@ -334,14 +339,65 @@ char *getRest(char **info, char *dataBase, int count){
         }
     return NULL; //por boa pratica devemos returnar sempre algo no fim do codigo mesmo que pareça impossivel chegar ate aqui
 }
-void conjution(char * response){
+char *conjution(char * response){
     //char **conjution = malloc(15 * sizeof(char*)); //para o que que a palavra tem de se substituir para
     //char **cases = malloc(14 * sizeof(char*)); //que palavras vao ser substituidas
-    char *conjution[] = {"AM", "ARE", "WAS", "WERE", "I", "ME", "YOU", "MY",
-    "YOUR", "YOUVE", "IVE", "YOURE", "YOU", "YOU", "YOU"};
-    char *cases[] = {"ARE", "AM", "WERE", "WAS", "YOU", "I", "YOUR", "MY",
-    "IVE", "YOUVE", "IM", "ME", "US", "WE"};
-    int match = searcher(response, cases, 14);
+    char *conjution(char *response, bool is_portuguese) {
+    // 1. Define English mappings (Removed YOU so we can handle it specially)
+    char *en_cases[] = {"ARE", "AM", "WERE", "WAS", "I", "YOUR", "MY", "IVE", "YOUVE", "IM", "ME", "US", "WE"};
+    char *en_conj[]  = {"AM", "ARE", "WAS", "WERE", "YOU", "MY", "YOUR", "YOUVE", "IVE", "YOURE", "YOU", "YOU", "YOU"};
+    int en_count = 13;
+
+
+    char *pt_cases[] = {"EU", "TU", "COMIGO", "CONTIGO", "TEU", "SEU", "MEU", "TEUS", "SEUS", "MEUS", "TUA", "SUA", "MINHA", "TUAS", "SUAS", "MINHAS", "MIM", "TI"};
+    char *pt_conj[]  = {"TU", "EU", "CONTIGO", "COMIGO", "MEU", "MEU", "TEU", "MEUS", "MEUS", "TEUS", "MINHA", "MINHA", "TUA", "MINHAS", "MINHAS", "TUAS", "TI", "MIM"};
+    int pt_count = 18;
+
+    // mudar isto talvez mas serve para escolher qual usar
+    char **cases = is_portuguese ? pt_cases : en_cases;
+    char **conj  = is_portuguese ? pt_conj : en_conj;
+    int count    = is_portuguese ? pt_count : en_count;
+
+    char *new_resp = calloc(strlen(response) * 2 + 1, sizeof(char));
+
+    
+    char *word = strtok(response, " ");
+
+    while(word != NULL) {
+        
+        char *next_word = strtok(NULL, " ");
+        bool isLast = (next_word == NULL);
+        bool replaced = false;
+
+        
+        if (!is_portuguese && strcmp(word, "YOU") == 0) {
+            if (is_last) strcat(new_resp, "ME"); 
+            else strcat(new_resp, "I");          
+            replaced = true;
+        }
+        else {
+            for(int i = 0; i < count; i++) {
+                if(strcmp(word, cases[i]) == 0) {
+                    strcat(new_resp, conj[i]);
+                    replaced = true;
+                    break; 
+                }
+            }
+        }
+        if(!replaced) {
+            strcat(new_resp, word);
+        }
+
+        
+        if(!is_last) {
+            strcat(new_resp, " ");
+        }
+        word = next_word; //avançar para o proximo, nao temos aqui o strtok(NULL, " ") porque precisamos dele para o isLast
+    }
+    free(response); //libertar o espaco da antiga
+    return new_resp;
+}
+
     /*for(int i = 0; i < 14; i++){
         char *search = strstr(response[0], cases[i]);
     }*/
