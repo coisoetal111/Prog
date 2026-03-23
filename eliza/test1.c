@@ -73,17 +73,18 @@ int main(int argc, char **argv)
 
 
         case '?':
-        if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
-          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        if (optopt == 'i' || optopt == 'e' || optopt == 'n')
+          fprintf (stderr, "A opção -%c requer um argumento.\n", optopt);
         else if (isprint (optopt))
-          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+          fprintf (stderr, "opção desconhecida `-%c'.\n", optopt);
         else
           fprintf (stderr,
-                   "Unknown option character `\\x%x'.\n",
+                   "caracter desconhhecido `\\x%x'.\n",
                    optopt);
             return 1;
       default:
         abort ();
+    
     }
 
 
