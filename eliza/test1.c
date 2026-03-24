@@ -13,7 +13,7 @@ char *getRest(char **info, char *dataBase, int count);
 void removeSymbols(char * vector);
 int searcher(char *info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr);
-char *conjution(char * response);
+char *conjution(char * response, bool is_portuguese);
 int main(int argc, char **argv)
 {
 
@@ -73,18 +73,17 @@ int main(int argc, char **argv)
 
 
         case '?':
-        if (optopt == 'i' || optopt == 'e' || optopt == 'n')
-          fprintf (stderr, "A opção -%c requer um argumento.\n", optopt);
+        if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
+          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
         else if (isprint (optopt))
-          fprintf (stderr, "opção desconhecida `-%c'.\n", optopt);
+          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
         else
           fprintf (stderr,
-                   "caracter desconhhecido `\\x%x'.\n",
+                   "Unknown option character `\\x%x'.\n",
                    optopt);
             return 1;
       default:
         abort ();
-    
     }
 
 
@@ -207,12 +206,19 @@ int main(int argc, char **argv)
             }
             removeSymbols(buffer);
             if(strcmp(buffer, "\0") == 0) continue; // caso o input seja so espaços
-            if(strcmp(buffer, "BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
+            if(strcmp(buffer, is_portuguese ? "ADEUS":"BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
                 fprintf(output, "%s\n", pinitial_3[10]);
                 if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
 
                 break;
             }
+            /*if(!is_portuguese && strcmp(buffer, "BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
+                fprintf(output, "%s\n", pinitial_3[10]);
+                if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
+
+                break;
+            }
+            */
             pinput[0] = strdup(buffer);
             //criar condição para caso de repeticao de input
             if(pinput[1] != NULL && strcmp(pinput[0], pinput[1]) == 0){ //caso o ultimo input seja igual ao input atual
@@ -236,17 +242,18 @@ int main(int argc, char **argv)
             //bool ISAsterisk = false
             char *asterisk = strchr(resp, '*');
             if(asterisk != NULL){
-                char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
+                char *rest = getRest(pinput, pkey_words[match], count_keywords);
+                char *finishResponses = conjution(rest, is_portuguese);
                 if(finishResponses != NULL){
                     char *final_of_string = strdup(asterisk + 1); //passa para uma sting todo o resto depois do *
                     *asterisk = '\0'; //remove o * no resp ja que estes estao associados pelo mesmo adereco
-                    int size = strlen(finishResponses) + strlen(resp);
-                    resp = realloc(resp, size * sizeof(char*));
+                    int size = strlen(finishResponses) + strlen(resp) + strlen(final_of_string) + 1;
+                    resp = realloc(resp, size * sizeof(char));
                     strcat(resp, finishResponses);
                     strcat(resp, final_of_string);
+                    free(finishResponses);
                     free(final_of_string);
                 }
-                conjution(resp);
             }
                 fprintf(output, "%s\n", resp);
                 if(log != NULL) fprintf(log, "%s\n", resp);// escrever output no log
@@ -340,16 +347,16 @@ char *getRest(char **info, char *dataBase, int count){
         }
     return NULL; //por boa pratica devemos returnar sempre algo no fim do codigo mesmo que pareça impossivel chegar ate aqui
 }
-char *conjution(char * response){
+char *conjution(char * response, bool is_portuguese){
     //char **conjution = malloc(15 * sizeof(char*)); //para o que que a palavra tem de se substituir para
     //char **cases = malloc(14 * sizeof(char*)); //que palavras vao ser substituidas
-    char *conjution(char *response, bool is_portuguese) {
     // 1. Define English mappings (Removed YOU so we can handle it specially)
+    if(response == NULL) return NULL; //porque pode ser que o getrest tenha returnado nada e nos nao querremos quebrar o flow no main
     char *en_cases[] = {"ARE", "AM", "WERE", "WAS", "I", "YOUR", "MY", "IVE", "YOUVE", "IM", "ME", "US", "WE"};
     char *en_conj[]  = {"AM", "ARE", "WAS", "WERE", "YOU", "MY", "YOUR", "YOUVE", "IVE", "YOURE", "YOU", "YOU", "YOU"};
     int en_count = 13;
 
-
+    // 2. Define Portuguese mappings (from your project guidelines)
     char *pt_cases[] = {"EU", "TU", "COMIGO", "CONTIGO", "TEU", "SEU", "MEU", "TEUS", "SEUS", "MEUS", "TUA", "SUA", "MINHA", "TUAS", "SUAS", "MINHAS", "MIM", "TI"};
     char *pt_conj[]  = {"TU", "EU", "CONTIGO", "COMIGO", "MEU", "MEU", "TEU", "MEUS", "MEUS", "TEUS", "MINHA", "MINHA", "TUA", "MINHAS", "MINHAS", "TUAS", "TI", "MIM"};
     int pt_count = 18;
@@ -358,22 +365,19 @@ char *conjution(char * response){
     char **cases = is_portuguese ? pt_cases : en_cases;
     char **conj  = is_portuguese ? pt_conj : en_conj;
     int count    = is_portuguese ? pt_count : en_count;
-
-    char *new_resp = calloc(strlen(response) * 2 + 1, sizeof(char));
-
-    
-    char *word = strtok(response, " ");
+    char *new_resp = calloc(strlen(response) * 2 + 2, sizeof(char)); //criar a nova resposta tendo cuidado com o facto que a nova resposta pode ter mais bits que a anterior devido a por exemplo passar de I para YOU
+    if(response[0] == ' ') strcpy(new_resp, " "); //adiciona o espaco vazio que existe no inicio da string
+    char *word = strtok(response, " "); //basicamente separa a string em tipo varias caixas com palavras dentro, essa separacao e feita onde ha os ' '
 
     while(word != NULL) {
-        
-        char *next_word = strtok(NULL, " ");
-        bool isLast = (next_word == NULL);
-        bool replaced = false;
+        char *next_word = strtok(NULL, " "); //salta para a proxima "caixa"
+        bool isLast = (next_word == NULL); //se for null ou seja a string acabou sabemos que a atual e a ultima e isso ajuda no caso do you
+        bool replaced = false; //saber se ja foi substituida ou nao na string
 
-        
-        if (!is_portuguese && strcmp(word, "YOU") == 0) {
-            if (is_last) strcat(new_resp, "ME"); 
-            else strcat(new_resp, "I");          
+
+        if (!is_portuguese && strcmp(word, "YOU") == 0) { //para o caso especial do you que pode dar dois outputs diferentes
+            if (isLast) strcat(new_resp, "ME");
+            else strcat(new_resp, "I");
             replaced = true;
         }
         else {
@@ -381,23 +385,21 @@ char *conjution(char * response){
                 if(strcmp(word, cases[i]) == 0) {
                     strcat(new_resp, conj[i]);
                     replaced = true;
-                    break; 
+                    break; //para o for porque ja encontramos a conjucao
                 }
             }
         }
-        if(!replaced) {
+        if(!replaced) {  //se nao for algo para substituir ent mantem-se
             strcat(new_resp, word);
         }
-
-        
-        if(!is_last) {
+        if(!isLast) { //enqaunto nao for a ultima palavra metemos um espaco depois
             strcat(new_resp, " ");
         }
-        word = next_word; //avançar para o proximo, nao temos aqui o strtok(NULL, " ") porque precisamos dele para o isLast
+        word = next_word; //avançar para o proximo, nao temos aqui o strtok(NULL, " ") porque precisamos dele para o isLast e por isso ja tinhamos o usado
     }
-    free(response); //libertar o espaco da antiga
+    //free(response); //libertar o espaco da antiga
     return new_resp;
-}
+    }
 
     /*for(int i = 0; i < 14; i++){
         char *search = strstr(response[0], cases[i]);
