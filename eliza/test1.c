@@ -8,12 +8,36 @@ LEEC - 25/26*/
 #include <ctype.h>
 #include <stdbool.h>
 #include <unistd.h>
+
+typedef struct
+{
+    int capacity_keywords;
+    int capacity_responses;
+    char **pinitial_3;
+    char **pkey_words;
+    char **presponses;
+    int count_keywords;
+    int *pkey_words_block;
+    int count_responses;
+    int *presponses_block;
+    int blocks;
+    int *counterRound_robin;
+} Eliza;
+
+
+
+
+
+
+
+
 char *getRest(char **info, char *dataBase, int count);
-//char **readFile(        );
+Eliza *ReadFile(char* filename);
 void removeSymbols(char * vector);
 int searcher(char *info, char **dataBase, int count);
 char *round_robin(char **dataBase, int count, int*responsesBlock, int Block, int *crr);
 char *conjution(char * response, bool is_portuguese);
+void FreeMem(char **pinput, Eliza* info);
 int main(int argc, char **argv)
 {
 
@@ -24,7 +48,7 @@ int main(int argc, char **argv)
     FILE *log = NULL;
     int terhandler;
     bool is_portuguese = false;//para saber depois na conjução se é em portugues ou não
-    while ((terhandler = getopt(argc, argv, "hi:o:l:f:p:")) != -1)
+    while ((terhandler = getopt(argc, argv, "hi:o:l:f:p")) != -1)
   {
     switch (terhandler)
       {
@@ -50,8 +74,8 @@ int main(int argc, char **argv)
                     fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
                     exit(EXIT_FAILURE);
                 }
-        //supostamente cria um ficheiro com o nome dado e escreve o output aí
-        //testado e a funcionar (espero eu)
+        //cria um ficheiro com o nome dado e escreve o output aí
+        
         break;
         case 'l':
         log = fopen(optarg, "w");
@@ -74,11 +98,11 @@ int main(int argc, char **argv)
 
         case '?':
         if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
-          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+          fprintf (output, "Option -%c requires an argument.\n", optopt);
         else if (isprint (optopt))
-          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+          fprintf (output, "Unknown option `-%c'.\n", optopt);
         else
-          fprintf (stderr,
+          fprintf (output,
                    "Unknown option character `\\x%x'.\n",
                    optopt);
             return 1;
@@ -88,112 +112,14 @@ int main(int argc, char **argv)
 
 
 }
+    Eliza *info = ReadFile(filename);
+    char buffer[1024] = {0}; //buffer para armazenar temporáriamente as informções do input
 
 
+    fprintf(output, "%s\n", info->pinitial_3[2]);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //open the file and read it
-    FILE *pfile = fopen(filename, "r");
-    char buffer[1024] = {0}; //mete tudo a 0
-    int capacity_keywords = 10;
-    int capacity_responses = 10;
-    char **pinitial_3 = calloc(12, sizeof(char*)); //como vou ignorar algum data ent meto tudo NULL para depois se der problema souber que é daqui
-    char **pkey_words = malloc(capacity_keywords * sizeof(char*));
-    char **presponses = malloc(capacity_responses * sizeof(char*));
-    //char **pespecial = calloc(1, sizeof(char*));
-    if(pfile == NULL){
-        printf("Could not open file\n");
-        exit(EXIT_FAILURE);
-    }
-    /*vai salvar as informacoes vinda do ficheiro
-    nos diferentes arrays de pointers*/
-    //vai ver quantos blocos de palavras chaves existem ate pq esse numero vai ser igual ao de respostas e colocar num for loop
-    int blocks = -3; //começar a -4 para remover os ! das frases de acolhimento e do especial
-    while(fgets(buffer, sizeof(buffer), pfile) != NULL){
-        buffer[strcspn(buffer, "\r\n")] = '\0';
-        if(strcmp(buffer, "!") == 0) blocks++;
-    }
-    int *counterRound_robin = calloc(blocks, sizeof(int));
-    rewind(pfile); //volta para o inicio
-    //para as 3 especiais
-    int count = 0;
-    while(count < 12 && fgets(buffer, sizeof(buffer), pfile) != NULL){
-            //o if ignora tudo e que nao sao as palavras de acolhimento
-            if(count != 0 || count != 1 || count != 3 || count != 4 || count != 5 || count != 7 || count != 8 || count != 9 || count != 11){
-            buffer[strcspn(buffer, "\r\n")] = '\0'; //limpa o buff pode ser que mude para outra forma de limpar o buff
-            pinitial_3[count] = strdup(buffer); //copia o que se encontra no buffer para o array alocando automaticamente a memoria suficiente
-            for(int i = 0; pinitial_3[count][i] != '\0'; i++){ //tranformar letra por letra em upper case para ter tudo maiusculo
-                pinitial_3[count][i] = toupper(pinitial_3[count][i]);
-            }
-            count++;
-            } else count++;
-    }
-    int count_keywords = 0;
-    int *pkey_words_block = malloc(blocks * sizeof(int));
-    int count_responses = 0;
-    int *presponses_block = malloc(blocks * sizeof(int));
-    for(int i = 0; i < blocks; i++){
-        //para as palavras chaves
-        while(fgets(buffer, sizeof(buffer), pfile) != NULL){
-                buffer[strcspn(buffer, "\r\n")] = '\0';
-                if (strcmp(buffer, "!") == 0) break; // programa vai parar quando encontrar o !
-                if(count_keywords >= capacity_keywords){
-                    capacity_keywords *= 2;
-                    pkey_words = realloc(pkey_words, capacity_keywords * sizeof(char*));
-                    pkey_words_block = realloc(pkey_words_block, capacity_keywords * sizeof(int));
-                }
-                pkey_words[count_keywords] = strdup(buffer);
-                for(int i = 0; pkey_words[count_keywords][i] != '\0'; i++){
-                    pkey_words[count_keywords][i] = toupper(pkey_words[count_keywords][i]);
-                }
-                pkey_words_block[count_keywords] = i; //vai marcar o index do bloco onde esta a palavra chave
-                count_keywords++;
-        }
-        //para as respostas delas
-        while(fgets(buffer, sizeof(buffer), pfile) != NULL){
-                buffer[strcspn(buffer, "\r\n")] = '\0';
-                if (strcmp(buffer, ".") == 0) break; // programa vai parar quando encontrar o .
-                if(count_responses >= capacity_responses){
-                    capacity_responses *= 2;
-                    presponses = realloc(presponses, capacity_responses * sizeof(char*));
-                    presponses_block = realloc(presponses_block, capacity_responses * sizeof(int));
-                }
-                presponses[count_responses] = strdup(buffer);
-                for(int i = 0; presponses[count_responses][i] != '\0'; i++){
-                    presponses[count_responses][i] = toupper(presponses[count_responses][i]);
-                }
-                presponses_block[count_responses] = i; //vai marcar o index do bloco onde esta a resposta
-                count_responses++;
-        }
-    }
-    /*while(fgets(buffer, sizeof(buffer), pfile) != NULL){
-            buffer[strcspn(buffer, "\r\n")] = '\0';
-            pespecial[0] = strdup(buffer);
-            for(int i = 0; pespecial[0][i] != '\0'; i++){
-                pespecial[0][i] = toupper(pespecial[0][i]);
-            }
-    }*/
-    fclose(pfile);
-    /*tudo em relação a ler o ficheiro esta feito
-    hora de trabalhar com o stdin*/
-    //int * counter_blocks = calloc(blocks, sizeof(int*)); //serve para saber em qual rotação estamos em cada bloco existente e começa em 0
-    fprintf(output, "%s\n", pinitial_3[2]);
-
-
-    if(log != NULL) fprintf(log, "%s\n", pinitial_3[2]); //escrever as inputs no log
+    if(log != NULL) fprintf(log, "%s\n", info->pinitial_3[2]); //escrever as inputs no log
     /* temos de nos preocupar com o receber input, encontrar a equivalencia em termos de keywords e rotacionar as palavras*/
     char **pinput = calloc(10, sizeof(char*)); //estou a usar aqui o calloc pq como vou precisar guardar informação convem que comece em null
     while(true){
@@ -207,42 +133,29 @@ int main(int argc, char **argv)
             removeSymbols(buffer);
             if(strcmp(buffer, "\0") == 0) continue; // caso o input seja so espaços
             if(strcmp(buffer, is_portuguese ? "ADEUS":"BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
-                fprintf(output, "%s\n", pinitial_3[10]);
-                if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
+                fprintf(output, "%s\n", info->pinitial_3[10]);
+                if(log != NULL) fprintf(log, "%s\n", info->pinitial_3[10]);// escrever output no log
 
                 break;
             }
-            /*if(!is_portuguese && strcmp(buffer, "BYE") == 0){ //falta meter o is_portuguese aqui para depois funcionar para o adeus
-                fprintf(output, "%s\n", pinitial_3[10]);
-                if(log != NULL) fprintf(log, "%s\n", pinitial_3[10]);// escrever output no log
-
-                break;
-            }
-            */
             pinput[0] = strdup(buffer);
             //criar condição para caso de repeticao de input
             if(pinput[1] != NULL && strcmp(pinput[0], pinput[1]) == 0){ //caso o ultimo input seja igual ao input atual
-                fprintf(output, "%s\n", pinitial_3[6]);
-                if(log != NULL) fprintf(log, "%s\n", pinitial_3[6]);// escrever output no log
+                fprintf(output, "%s\n", info->pinitial_3[6]);
+                if(log != NULL) fprintf(log, "%s\n", info->pinitial_3[6]);// escrever output no log
                 free(pinput[0]);
                 continue;
             }
             if(pinput[1] != NULL) free(pinput[1]); //liberta o ultimo input
             pinput[1] = strdup(pinput[0]); //guarda o input atual
 
-            int match = searcher(pinput[0], pkey_words, count_keywords); //vai receber o index da keyword onde foi encontrado a correspondencia
-            if(match == -1) match = count_keywords - 1; //vamos pegar  no ultima string de todas dentro do array de keywords para obtermos o index do bloco
-            int currentBlock = pkey_words_block[match]; //obter o index do block onde esta a correspondencia
-                //char *finishResponses = getRest(pinput, pkey_words[match], count_keywords);
-                /*if(finishResponses != NULL){
-                printf("%s %s\n", round_robin(presponses, count_responses, presponses_block, currentBlock, counterRound_robin), finishResponses);
-                */
-                //}else{
-            char *resp = round_robin(presponses, count_responses, presponses_block, currentBlock, counterRound_robin);
-            //bool ISAsterisk = false
+            int match = searcher(pinput[0], info->pkey_words, info->count_keywords); //vai receber o index da keyword onde foi encontrado a correspondencia
+            if(match == -1) match = info->count_keywords - 1; //vamos pegar  no ultima string de todas dentro do array de keywords para obtermos o index do bloco
+            int currentBlock = info->pkey_words_block[match]; //obter o index do block onde esta a correspondencia
+            char *resp = round_robin(info->presponses, info->count_responses, info->presponses_block, currentBlock, info->counterRound_robin);
             char *asterisk = strchr(resp, '*');
             if(asterisk != NULL){
-                char *rest = getRest(pinput, pkey_words[match], count_keywords);
+                char *rest = getRest(pinput, info->pkey_words[match], info->count_keywords);
                 char *finishResponses = conjution(rest, is_portuguese);
                 if(finishResponses != NULL){
                     char *final_of_string = strdup(asterisk + 1); //passa para uma sting todo o resto depois do *
@@ -261,29 +174,15 @@ int main(int argc, char **argv)
                 free(pinput[0]); //limpagem de memoria do stdin
     }
     //fechar os ficheiros do terminal
-    fclose(output);
-    fclose(input);
-    fclose(log);
+    if(output != stdout) fclose(output);
+    if(input != stdin) fclose(input);
+    if(log != NULL) fclose(log);
 
+    FreeMem(pinput, info);
 
+    
 
-    //limpagem de memoria do stdin
-    if(pinput[1] != NULL) free(pinput[1]);
-    free(pinput);
-    //limpagem de memoria do dados que vinham do ficheiro
-    free(counterRound_robin);
-    for(int i = 0; i < 12; i++) free(pinitial_3[i]);
-    free(pinitial_3);
-    for(int i = 0; i < count_keywords; i++) free(pkey_words[i]);
-    free(pkey_words);
-    for(int i = 0; i < count_responses; i++) free(presponses[i]);
-    free(presponses);
-    //free(pespecial[0]);
-    //free(pespecial);
-    free(pkey_words_block);
-    free(presponses_block);
-
-    //return 0; //EXIT_SUCESS (0)
+    
     exit(EXIT_SUCCESS);
 }
 //este codigo com a ajuda do isalnum que remove qualquer simbolo vai remover o simbolos dos inputs stdin
@@ -313,8 +212,6 @@ int searcher(char *info, char **dataBase, int count){
         while(search){
             bool checkBefore = (search == info) || (*(search-1) == ' '); //cheka a parte detras para ver se nao ha nenhuma palavra que nao pertence
             bool checkAfter = (search[strlen(dataBase[i])] == '\0') || (search[strlen(dataBase[i])] == ' ');//isto cheka a que tem a frente da palavra
-            //bool isAsteriskyou = (search[strlen(dataBase[i])] == '*');
-            //if(isAsteriskyou) return 15;
             if(checkBefore && checkAfter) return i;
 
             search = strstr(search+1, dataBase[i]); //vai avaçando na palavra que achamos para ver se e ou nao o que queremos
@@ -342,14 +239,12 @@ char *getRest(char **info, char *dataBase, int count){
         if(rest != NULL){
         rest += strlen(dataBase); //vai para a frente da keyword para assim nao termos a keyword no print
         if(*rest == '\0') return NULL;
-        //if(*rest == ' ') rest++; //se o primeiro rest for um espaço vamos o remover
         return rest;
         }
     return NULL; //por boa pratica devemos returnar sempre algo no fim do codigo mesmo que pareça impossivel chegar ate aqui
 }
 char *conjution(char * response, bool is_portuguese){
-    //char **conjution = malloc(15 * sizeof(char*)); //para o que que a palavra tem de se substituir para
-    //char **cases = malloc(14 * sizeof(char*)); //que palavras vao ser substituidas
+    
     // 1. Define English mappings (Removed YOU so we can handle it specially)
     if(response == NULL) return NULL; //porque pode ser que o getrest tenha returnado nada e nos nao querremos quebrar o flow no main
     char *en_cases[] = {"ARE", "AM", "WERE", "WAS", "I", "YOUR", "MY", "IVE", "YOUVE", "IM", "ME", "US", "WE"};
@@ -401,12 +296,105 @@ char *conjution(char * response, bool is_portuguese){
     return new_resp;
     }
 
-    /*for(int i = 0; i < 14; i++){
-        char *search = strstr(response[0], cases[i]);
-    }*/
+    
 
-/*for(int i = 0; i < 15; i++) free(conjution[i]);
-free(conjution);
-for(int i = 0; i < 14; i++) free(cases[i]);
-free(cases);
-}*/
+Eliza *ReadFile(char* filename){
+
+    Eliza *info = malloc(sizeof(Eliza));
+    FILE *pfile = fopen(filename, "r");
+    char buffer[1024] = {0}; //buffer para armazenar temporáriamente as informções da database
+    info->capacity_keywords = 10;
+    info->capacity_responses = 10;
+    info->pinitial_3 = calloc(12, sizeof(char*)); //como vou ignorar algum data ent meto tudo NULL para depois se der problema souber que é daqui
+    info->pkey_words = malloc(info->capacity_keywords * sizeof(char*));
+    info->presponses = malloc(info->capacity_responses * sizeof(char*));
+    //char **pespecial = calloc(1, sizeof(char*));
+    if(pfile == NULL){
+        printf("Could not open file\n");
+        exit(EXIT_FAILURE);
+    }
+    /*vai salvar as informacoes vinda do ficheiro
+    nos diferentes arrays de pointers*/
+    //vai ver quantos blocos de palavras chaves existem ate pq esse numero vai ser igual ao de respostas e colocar num for loop
+    info->blocks = -3; //começar a -4 para remover os ! das frases de acolhimento e do especial
+    while(fgets(buffer, sizeof(buffer), pfile) != NULL){
+        buffer[strcspn(buffer, "\r\n")] = '\0';
+        if(strcmp(buffer, "!") == 0) info->blocks++;
+    }
+    info->counterRound_robin = calloc(info->blocks, sizeof(int));
+    rewind(pfile); //volta para o inicio
+    //para as 3 especiais
+    int count = 0;
+    while(count < 12 && fgets(buffer, sizeof(buffer), pfile) != NULL){
+            //o if ignora tudo e que nao sao as palavras de acolhimento
+            if(count != 0 || count != 1 || count != 3 || count != 4 || count != 5 || count != 7 || count != 8 || count != 9 || count != 11){
+            buffer[strcspn(buffer, "\r\n")] = '\0'; //limpa o buff pode ser que mude para outra forma de limpar o buff
+            info->pinitial_3[count] = strdup(buffer); //copia o que se encontra no buffer para o array alocando automaticamente a memoria suficiente
+            for(int i = 0; info->pinitial_3[count][i] != '\0'; i++){ //tranformar letra por letra em upper case para ter tudo maiusculo
+                info->pinitial_3[count][i] = toupper(info->pinitial_3[count][i]);
+            }
+            count++;
+            } else count++;
+    }
+    info->count_keywords = 0;
+    info->pkey_words_block = malloc(info->blocks * sizeof(int));
+    info->count_responses = 0;
+    info->presponses_block = malloc(info->blocks * sizeof(int));
+    for(int i = 0; i < info->blocks; i++){
+        //para as palavras chaves
+        while(fgets(buffer, sizeof(buffer), pfile) != NULL){
+                buffer[strcspn(buffer, "\r\n")] = '\0';
+                if (strcmp(buffer, "!") == 0) break; // programa vai parar quando encontrar o !
+                if(info->count_keywords >= info->capacity_keywords){
+                    info->capacity_keywords *= 2;
+                    info->pkey_words = realloc(info->pkey_words, info->capacity_keywords * sizeof(char*));
+                    info->pkey_words_block = realloc(info->pkey_words_block, info->capacity_keywords * sizeof(int));
+                }
+                info->pkey_words[info->count_keywords] = strdup(buffer);
+                for(int i = 0; info->pkey_words[info->count_keywords][i] != '\0'; i++){
+                    info->pkey_words[info->count_keywords][i] = toupper(info->pkey_words[info->count_keywords][i]);
+                }
+                info->pkey_words_block[info->count_keywords] = i; //vai marcar o index do bloco onde esta a palavra chave
+                info->count_keywords++;
+        }
+        //para as respostas delas
+        while(fgets(buffer, sizeof(buffer), pfile) != NULL){
+                buffer[strcspn(buffer, "\r\n")] = '\0';
+                if (strcmp(buffer, ".") == 0) break; // programa vai parar quando encontrar o .
+                if(info->count_responses >= info->capacity_responses){
+                    info->capacity_responses *= 2;
+                    info->presponses = realloc(info->presponses, info->capacity_responses * sizeof(char*));
+                    info->presponses_block = realloc(info->presponses_block, info->capacity_responses * sizeof(int));
+                }
+                info->presponses[info->count_responses] = strdup(buffer);
+                for(int i = 0; info->presponses[info->count_responses][i] != '\0'; i++){
+                    info->presponses[info->count_responses][i] = toupper(info->presponses[info->count_responses][i]);
+                }
+                info->presponses_block[info->count_responses] = i; //vai marcar o index do bloco onde esta a resposta
+                info->count_responses++;
+        }
+    }
+    
+    fclose(pfile);
+    return info;
+
+
+}
+
+void FreeMem(char **pinput, Eliza *info){
+
+    //limpagem de memoria do stdin
+    if(pinput[1] != NULL) free(pinput[1]);
+    free(pinput);
+    //limpagem de memoria do dados que vinham do ficheiro
+    free(info->counterRound_robin);
+    for(int i = 0; i < 12; i++) free(info->pinitial_3[i]);
+    free(info->pinitial_3);
+    for(int i = 0; i < info->count_keywords; i++) free(info->pkey_words[i]);
+    free(info->pkey_words);
+    for(int i = 0; i < info->count_responses; i++) free(info->presponses[i]);
+    free(info->presponses);
+    free(info->pkey_words_block);
+    free(info->presponses_block);
+    free(info);
+}
