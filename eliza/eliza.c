@@ -63,7 +63,7 @@ int main(int argc, char **argv)
       case 'i':
        input = fopen(optarg, "r");
                 if (input == NULL) {
-                    fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
+                    fprintf(output, "Erro ao abrir o ficheiro %s", optarg);
                     exit(EXIT_FAILURE);
                 }
 
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
       case 'o':
         output = fopen(optarg, "w");
                 if (output == NULL) {
-                    fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
+                    //eu poderia meter uma mensagem de erro no stderr mas no enunciado especifica-se que não é para escrever no stderr
                     exit(EXIT_FAILURE);
                 }
         //cria um ficheiro com o nome dado e escreve o output aí
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
         case 'l':
         log = fopen(optarg, "w");
                 if (log == NULL) {
-                    fprintf(stderr, "Erro ao abrir o ficheiro %s", optarg);
+                    fprintf(output, "Erro ao abrir o ficheiro %s", optarg);
                     exit(EXIT_FAILURE);
                 }
         break;
