@@ -15,76 +15,6 @@ LEEC - 25/26*/
 
 int main(int argc, char **argv)
 {
-    // Terminal handler setup
-    char *filename = "eliza.dat";
-    FILE *output = stdout;
-    FILE *input = stdin;
-    FILE *log = NULL;
-    int terhandler;
-    bool is_portuguese = false; //para saber depois se a conjucao e em portugues ou nao
-    opterr = 0; //para nunca imprimir os seus erros no terminal 
-    char *error_msg = NULL; //para a mensagem de erro 
-    while ((terhandler = getopt(argc, argv, "hi:o:l:f:p")) != -1) {
-        switch (terhandler) {
-            case 'h':
-                printf("Arguments:\n-h\t\tshow the help for the user(this message) and ends\n");
-                printf("-i[filename]\tentry name file, in alternative of stdin\n");
-                printf("-o[filename]\texit name file, in alternative of stdout\n");
-                printf("-l[filename]\tmake log of the input and output to the file filename\n");
-                printf("-i[filename]\tuse the file filename with the data base of responses instead of \"eliza.dat\"\n");
-                printf("-p\t\tuse portuguese rules, instead of the english ones\n");
-                exit(EXIT_SUCCESS);
-                break;
-            case 'i':
-                input = fopen(optarg, "r");
-                if (input == NULL) {
-                    fprintf(output, "Error while opening the file %s\n", optarg);
-                    exit(EXIT_FAILURE); 
-                }
-                break;
-            case 'o':
-                output = fopen(optarg, "w");
-                if (output == NULL) exit(EXIT_FAILURE);
-                break;
-            case 'l':
-                log = fopen(optarg, "w");
-                if (log == NULL) exit(EXIT_FAILURE);
-                break;
-            case 'f':
-                filename = optarg;
-                break;
-            case 'p':
-                is_portuguese = true; //passa a portugues
-                break;
-
-            case '?':
-                if (error_msg == NULL) { //apenas "aluga" espaco se houver um primeiro erro
-                    error_msg = malloc(100 * sizeof(char));
-                    
-                    if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
-                        sprintf(error_msg, "Option -%c requires an argument.\n", optopt);
-                    else if (isprint(optopt))
-                        sprintf(error_msg, "Unknown option `-%c'.\n", optopt);
-                    else
-                        sprintf(error_msg, "Unknown option character `\\x%x'.\n", optopt);
-                }
-                break;
-            default:
-                abort();
-        }
-    }
-    if (error_msg != NULL) { //ve se existiu algum erro no codigo
-        fprintf(output, "%s", error_msg);
-        free(error_msg); // limpa a memoria
-        
-        if(output != stdout) fclose(output);
-        if(input != stdin) fclose(input);
-        if(log != NULL) fclose(log);
-        return 1;
-    }
--
--
--
 
     //terminal handler
     char *filename = "eliza.dat";
@@ -98,18 +28,17 @@ int main(int argc, char **argv)
     switch (terhandler)
       {
       case 'h':
-        printf("Arguments:\n-h\t\tshow the help for the user(this message) and ends\n");
-        printf("-i[filename]\tentry name file, in alternative of stdin\n");
-        printf("-o[filename]\texit name file, in alternative of stdout\n");
-        printf("-l[filename]\tmake log of the input and output to the file filename\n");
-        printf("-i[filename]\tuse the file filename with the data base of responses instead of \"eliza.dat\"\n");
-        printf("-p\t\tuse portuguese rules, instead of the english ones\n");
+        printf("Arguments:\n-h\t\tmostra a ajuda para o utilizador(esta mensagem) e termina\n");
+        printf("-i[filename]\tnome do ficheiro de entrada, em alternativa a stdin\n");
+        printf("-o[filename]\tnome do ficheiro de saída, em alternativa a stdout\n");
+        printf("-l[filename]\tfazer log do input e output para o ficheiro filename\n");
+        printf("-i[filename]\tusar ficheiro filename com base de dados de respostas em vez de \"eliza.dat\"\n");
+        printf("-p\t\tusar regras de português, em vez de inglês\n");
         exit(EXIT_SUCCESS);
         break;
       case 'i':
        input = fopen(optarg, "r");
                 if (input == NULL) {
-                    fprintf(output, "Error while opening the file %s", optarg);
                     if(output != NULL) fclose(output);
                     if(log != NULL) fclose(log);
                     return 1;
@@ -119,9 +48,11 @@ int main(int argc, char **argv)
       case 'o':
         output = fopen(optarg, "w");
                 if (output == NULL) {
-                    //eu poderia meter uma mensagem de erro no stderr mas no enunciado especifica-se que não é para escrever no stderr
+                    if(log != NULL){
+                        fclose(log);
+                    }
                     if(input != NULL) fclose(input);
-                    if(log != NULL) fclose(log);
+                    
                     return 1;
                 }
         //cria um ficheiro com o nome dado e escreve o output aí
@@ -130,7 +61,6 @@ int main(int argc, char **argv)
         case 'l':
         log = fopen(optarg, "w");
                 if (log == NULL) {
-                    fprintf(output, "Error while opening the file %s", optarg);
                     if(input != NULL) fclose(input);
                     if(output != NULL) fclose(output);
                     return 1;
@@ -142,26 +72,20 @@ int main(int argc, char **argv)
       case 'p':
         is_portuguese = true;
         //Português ao invés de inglês
+        // para ser honesto n sei como hei de fzr isto portanto boa sorte Torres☆*: .｡. o(≧▽≦)o .｡.:*☆
         break;
 
 
 
 
         case '?':
-        if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
-          fprintf (output, "Option -%c requires an argument.\n", optopt);
-        else if (isprint (optopt))
-          fprintf (output, "Unknown option `-%c'.\n", optopt);
-        else
-          fprintf (output,
-                   "Unknown option character `\\x%x'.\n",
-                   optopt);
-        if(output != stdout) fclose(output);
-        if(input != stdin) fclose(input);
-        if(log != NULL) fclose(log);
-        return 1;
-      default:
-        abort ();
+           
+
+            // Fechar ficheiros antes de sair para evitar leaks
+            if (output != stdout && output != NULL) fclose(output);
+            if (input != stdin && input != NULL) fclose(input);
+            if (log != NULL) fclose(log);
+            return 1;
     }
 }
 
@@ -256,4 +180,3 @@ int main(int argc, char **argv)
     
     exit(EXIT_SUCCESS);
 }
-
