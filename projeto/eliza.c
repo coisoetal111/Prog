@@ -39,7 +39,6 @@ int main(int argc, char **argv)
       case 'i':
        input = fopen(optarg, "r");
                 if (input == NULL) {
-                    fprintf(output, "Erro ao abrir o ficheiro %s", optarg);
                     if(output != NULL) fclose(output);
                     if(log != NULL) fclose(log);
                     return 1;
@@ -49,9 +48,11 @@ int main(int argc, char **argv)
       case 'o':
         output = fopen(optarg, "w");
                 if (output == NULL) {
-                    //eu poderia meter uma mensagem de erro no stderr mas no enunciado especifica-se que não é para escrever no stderr
+                    if(log != NULL){
+                        fclose(log);
+                    }
                     if(input != NULL) fclose(input);
-                    if(log != NULL) fclose(log);
+                    
                     return 1;
                 }
         //cria um ficheiro com o nome dado e escreve o output aí
@@ -60,7 +61,6 @@ int main(int argc, char **argv)
         case 'l':
         log = fopen(optarg, "w");
                 if (log == NULL) {
-                    fprintf(output, "Erro ao abrir o ficheiro %s", optarg);
                     if(input != NULL) fclose(input);
                     if(output != NULL) fclose(output);
                     return 1;
@@ -79,20 +79,13 @@ int main(int argc, char **argv)
 
 
         case '?':
-        if (optopt == 'i' || optopt == 'l' || optopt == 'o' || optopt == 'f')
-          fprintf (output, "Option -%c requires an argument.\n", optopt);
-        else if (isprint (optopt))
-          fprintf (output, "Unknown option `-%c'.\n", optopt);
-        else
-          fprintf (output,
-                   "Unknown option character `\\x%x'.\n",
-                   optopt);
-        if(output != stdout) fclose(output);
-        if(input != stdin) fclose(input);
-        if(log != NULL) fclose(log);
-        return 1;
-      default:
-        abort ();
+           
+
+            // Fechar ficheiros antes de sair para evitar leaks
+            if (output != stdout && output != NULL) fclose(output);
+            if (input != stdin && input != NULL) fclose(input);
+            if (log != NULL) fclose(log);
+            return 1;
     }
 }
 
@@ -187,5 +180,3 @@ int main(int argc, char **argv)
     
     exit(EXIT_SUCCESS);
 }
-
-
