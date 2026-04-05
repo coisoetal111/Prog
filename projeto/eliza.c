@@ -158,12 +158,7 @@ int main(int argc, char **argv)
                     free(finishResponses);
                     free(final_of_string);
                 }else{
-                    int len = strcspn(resp, "*");
-                    resp[len] = resp[len+1];
-                    if(resp[len] == '\0'){
-                        resp[len] = '\0';
-                    }else{
-                        resp[len+1] = '\0';
+                    memmove(asterisk, asterisk + 1, strlen(asterisk + 1) + 1);
                     }
 
                 }
