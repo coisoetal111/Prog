@@ -164,6 +164,10 @@ int main(int argc, char **argv)
                     strcat(resp, final_of_string);
                     free(finishResponses);
                     free(final_of_string);
+                }else{
+                    int len = strcspn(resp, "*");
+                    resp[len] = resp[len+1];
+                    resp[len+1] = '\0';
                 }
             }
                 fprintf(output, "%s\n", resp);
