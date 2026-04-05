@@ -160,7 +160,12 @@ int main(int argc, char **argv)
                 }else{
                     int len = strcspn(resp, "*");
                     resp[len] = resp[len+1];
-                    resp[len+1] = '\0';
+                    if(resp[len] == '\0'){
+                        resp[len] = '\0';
+                    }else{
+                        resp[len+1] = '\0';
+                    }
+
                 }
             }
                 fprintf(output, "%s\n", resp);
