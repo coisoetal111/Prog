@@ -28,12 +28,12 @@ int main(int argc, char **argv)
     switch (terhandler)
       {
       case 'h':
-        printf("Arguments:\n-h\t\tmostra a ajuda para o utilizador(esta mensagem) e termina\n");
-        printf("-i[filename]\tnome do ficheiro de entrada, em alternativa a stdin\n");
-        printf("-o[filename]\tnome do ficheiro de saída, em alternativa a stdout\n");
-        printf("-l[filename]\tfazer log do input e output para o ficheiro filename\n");
-        printf("-i[filename]\tusar ficheiro filename com base de dados de respostas em vez de \"eliza.dat\"\n");
-        printf("-p\t\tusar regras de português, em vez de inglês\n");
+        printf("Arguments:\n-h\t\tshow the help for the user(this message) and ends\n");
+        printf("-i[filename]\tentry name file, in alternative of stdin\n");
+        printf("-o[filename]\texit name file, in alternative of stdout\n");
+        printf("-l[filename]\tmake log of the input and output to the file filename\n");
+        printf("-i[filename]\tuse the file filename with the data base of responses instead of \"eliza.dat\"\n");
+        printf("-p\t\tuse portuguese rules, instead of the english ones\n");
         exit(EXIT_SUCCESS);
         break;
       case 'i':
