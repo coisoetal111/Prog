@@ -63,7 +63,7 @@ int main(int argc, char **argv)
                 if (log == NULL) {
                     if(input != NULL) fclose(input);
                     if(output != NULL) fclose(output);
-                    return 1;
+                    exit(EXIT_FAILURE);
                 }
         break;
       case 'f':
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
             if (output != stdout && output != NULL) fclose(output);
             if (input != stdin && input != NULL) fclose(input);
             if (log != NULL) fclose(log);
-            return 1;
+            exit(EXIT_FAILURE);
     }
 }
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         if(output != stdout) fclose(output);
         if(input != stdin) fclose(input);
         if(log != NULL) fclose(log);
-        return 1; 
+        exit(EXIT_FAILURE); 
     }
     char buffer[1024] = {0}; //buffer para armazenar temporáriamente as informções do input
 
